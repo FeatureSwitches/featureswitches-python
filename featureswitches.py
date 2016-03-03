@@ -3,7 +3,9 @@
 from __future__ import (print_function, unicode_literals, absolute_import)
 
 import json
+import time
 import requests
+import threading
 
 from featureswitches.featurecache import FeatureCache
 from featureswitches.feature import Feature
@@ -33,6 +35,11 @@ class FeatureSwitches(object):
             if r:
                 self._authenticated = True
                 self.sync()
+
+                t = threading.Thread(target=self._dirty_check)
+                t.setDaemon(True)
+                t.start()
+
                 return True
                 
         raise FeatureSwitchesAuthFailed()
@@ -56,7 +63,6 @@ class FeatureSwitches(object):
                         exclude_users=feature.get('exclude_users', [])
                 )
 
-                print("Setting feature {}".format(feature_key))
                 self._features.set_feature(feature_key, f)
 
     def add_user(self, user_identifier, customer_identifier=None, name=None, email=None):
@@ -104,6 +110,13 @@ class FeatureSwitches(object):
                 key=feature_key,
                 enabled=self._default
         )
+
+    def _dirty_check(self):
+        endpoint = 'dirty-check'
+        while True:
+            self.sync()
+            time.sleep(10)
+
 
     @property
     def customer_key(self):
