@@ -13,7 +13,7 @@ from featureswitches.http import HttpClient
 from featureswitches.errors import FeatureSwitchesAuthFailed
 
 class FeatureSwitches(object):
-    def __init__(self, customer_key, environment_key, default_disable=True, api='https://api.featureswitches.com/v1/'):
+    def __init__(self, customer_key, environment_key, default_disable=True, cache_expiration=300, api='https://api.featureswitches.com/v1/'):
         self._customer_key = customer_key
         self._environment_key = environment_key
 
@@ -23,8 +23,11 @@ class FeatureSwitches(object):
 
         self._api = api
         self._authenticated = False
-        self._features = FeatureCache()
+        self._last_feature_update = 0
         self._http = HttpClient(self)
+
+        FeatureCache(cache_expiration=cache_expiration)
+        #self._features = FeatureCache.getInstance()
 
     def authenticate(self):
         endpoint = 'authenticate'
@@ -53,6 +56,8 @@ class FeatureSwitches(object):
         endpoint = 'features'
         r = self._http.get(endpoint)
         if r:
+            self._last_feature_update = r.get('last_update')
+            feature_cache = FeatureCache.getInstance()
             for feature in r.get('features'):
                 feature_key = feature.get('feature_key', None)
 
@@ -63,7 +68,9 @@ class FeatureSwitches(object):
                         exclude_users=feature.get('exclude_users', [])
                 )
 
-                self._features.set_feature(feature_key, f)
+                #self._features.set_feature(feature_key, f)
+                feature_cache.set_feature(feature_key, f)
+
 
     def add_user(self, user_identifier, customer_identifier=None, name=None, email=None):
         """Add the user to FeatureSwitches"""
@@ -76,7 +83,9 @@ class FeatureSwitches(object):
             # Return a not authenticated error
             return False
 
-        feature = self._features.get_feature(feature_key)
+        #feature = self._features.get_feature(feature_key)
+        feature_cache = FeatureCache.getInstance()
+        feature = feature_cache.get_feature(feature_key)
 
         if feature:
             return feature.enabled
@@ -102,7 +111,9 @@ class FeatureSwitches(object):
                     exclude_users=r.get('exclude_users', [])
             )
 
-            self._features.set_feature(feature_key, feature)
+            feature_cache = FeatureCache.getInstance()
+            feature_cache.set_feature(feature_key, feature)
+            #self._features.set_feature(feature_key, feature)
 
             return feature
 
@@ -114,7 +125,11 @@ class FeatureSwitches(object):
     def _dirty_check(self):
         endpoint = 'dirty-check'
         while True:
-            self.sync()
+            r = self._http.get(endpoint)
+            print("Last Updated {}, Local Last Updated {}".format(r.get('last_update'), self._last_feature_update))
+            if r and r.get('last_update') > self._last_feature_update:
+                print("Feature Update, Syncing...")
+                self.sync()
             time.sleep(10)
 
 
