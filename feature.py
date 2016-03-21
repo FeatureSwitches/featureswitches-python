@@ -10,7 +10,7 @@ class Feature(object):
             'enabled': enabled,
             'include_users': include_users,
             'exclude_users': exclude_users,
-            'created': time.time()
+            'created': int(time.time())
         }
 
     @property

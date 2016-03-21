@@ -23,3 +23,14 @@ class HttpClient(object):
         except requests.RequestException as e:
             print("Request Exception: {}".format(e))
         return False
+
+    def post(self, endpoint, payload=None):
+        try:
+            r = requests.post(self._fs.api + endpoint, headers=self._auth_headers(), data=payload)
+
+            if r.status_code == 200:
+                return r.json()
+        except requests.RequestException as e:
+            print("Request Exception: {}".format(e))
+        return False
+

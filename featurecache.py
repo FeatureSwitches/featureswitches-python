@@ -9,7 +9,9 @@ class FeatureCache(dict):
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, '_instance'):
             cls._instance = dict.__new__(cls)
-            cls._cache_expiration = kwargs['cache_expiration']
+            cls._cache_expiration = 0
+            if 'cache_expiration' in kwargs:
+                cls._cache_expiration = kwargs['cache_expiration']
         return cls._instance
 
     @classmethod
@@ -21,7 +23,7 @@ class FeatureCache(dict):
     def get_feature(self, key):
         feature = self.get(key, None)
 
-        if feature is not None:
+        if feature is not None and self._cache_expiration > 0:
             if time.time() - feature.created >= self._cache_expiration:
                 del self[key]
                 return None
