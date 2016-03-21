@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import time
-
 class Feature(object):
 
-    def __init__(self, key, enabled, include_users=[], exclude_users=[]):
+    def __init__(self, key, enabled, include_users=[], exclude_users=[], last_sync=None):
         self._feature = {
             'key': key,
             'enabled': enabled,
             'include_users': include_users,
             'exclude_users': exclude_users,
-            'created': int(time.time())
+            'last_sync': last_sync
         }
 
     @property
@@ -30,5 +28,5 @@ class Feature(object):
         return self._feature['exclude_users']
 
     @property
-    def created(self):
-        return self._feature['created']
+    def last_sync(self):
+        return self._feature['last_sync']
