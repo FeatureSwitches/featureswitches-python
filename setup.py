@@ -30,22 +30,16 @@ if sys.version_info < (3, 0):
     except ImportError:
         install_requires.append('simplejson')
 
-def read(*paths):
-    """Build a file path from *paths* and return the contents."""
-    with open(os.path.join(*paths), 'r') as f:
-        return f.read()
-
 setup(
     name='featureswitches',
     cmdclass={'build_py': build_py},
     version=VERSION,
     description='Python client for FeatureSwitches.com',
-    long_description=read('README.md'),
+    long_description='Python client for FeatureSwitches.com',
     author='Joel Weirauch',
     author_email='joel@featureswitches.com',
     url='https://featureswitches.com',
     packages=['featureswitches'],
-    package_data={'featureswitches': ['../VERSION']},
     install_requires=install_requires,
     use_2to3=True,
     include_package_data=True,
