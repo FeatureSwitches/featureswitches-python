@@ -12,10 +12,10 @@ from GenericCache.GenericCache import GenericCache
 from featureswitches.feature import Feature
 from featureswitches.http import HttpClient
 from featureswitches.errors import FeatureSwitchesAuthFailed
+from featureswitches.version import VERSION
 
 class FeatureSwitches(object):
     API = 'https://api.featureswitches.com/v1/'
-    VERSION = '0.8.2'
 
     def __init__(self, customer_key, environment_key, cache_timeout=300, check_interval=10, api=None):
         self._customer_key = customer_key
