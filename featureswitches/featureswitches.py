@@ -21,7 +21,7 @@ class FeatureSwitches(object):
         self._customer_key = customer_key
         self._environment_key = environment_key
 
-        self._api = api if api else API
+        self._api = api if api else self.API
         self._authenticated = False
         self._last_feature_update = 0
         self._last_dirty_check = 0
