@@ -21,7 +21,7 @@ class HttpClient(object):
             if r.status_code == 200:
                 return r.json()
         except requests.RequestException as e:
-            print("Request Exception: {}".format(e))
+            pass
         return False
 
     def post(self, endpoint, payload=None):
@@ -31,6 +31,6 @@ class HttpClient(object):
             if r.status_code == 200:
                 return r.json()
         except requests.RequestException as e:
-            print("Request Exception: {}".format(e))
+            pass
         return False
 
