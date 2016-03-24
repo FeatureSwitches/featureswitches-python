@@ -17,7 +17,7 @@ os.chdir(os.path.abspath(path))
 
 install_requires = []
 install_requires.append('requests >= 2.9.1')
-install_requires.append('GenericCache >= 1.0.2')
+install_requires.append('dogpile.cache >= 0.5.7')
 
 # Don't import featureswitches module here, since deps may not be installed
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'featureswitches'))

@@ -7,11 +7,10 @@ import time
 import requests
 import threading
 
-from GenericCache.GenericCache import GenericCache
-
 from featureswitches.feature import Feature
 from featureswitches.http import HttpClient
 from featureswitches.errors import FeatureSwitchesAuthFailed
+from featureswitches.cache_factory import cache_factory
 from featureswitches.version import VERSION
 
 class FeatureSwitches(object):
@@ -31,7 +30,7 @@ class FeatureSwitches(object):
         self._cache_timeout = cache_timeout
         self._check_interval = check_interval
 
-        self._cache = GenericCache()
+        self._cache = cache_factory()
 
         self.sync()
 
@@ -64,7 +63,7 @@ class FeatureSwitches(object):
                         last_sync=self._last_sync
                 )
 
-                self._cache.insert(feature_key, f)
+                self._cache.set(feature_key, f)
 
 
     def add_user(self, user_identifier, customer_identifier=None, name=None, email=None):
@@ -84,9 +83,9 @@ class FeatureSwitches(object):
 
 
     def is_enabled(self, feature_key, user_identifier=None, default=False):
-        feature = self._cache.fetch(feature_key)
+        feature = self._cache.get(feature_key, ignore_expiration=True)
 
-        if feature is not None and not self._cache_is_stale(feature):
+        if feature and not self._cache_is_stale(feature):
             if feature.enabled:
                 if feature.include_users:
                     if user_identifier in feature.include_users:
@@ -141,7 +140,7 @@ class FeatureSwitches(object):
                     last_sync=self._current_timestamp()
             )
 
-            self._cache.insert(feature_key, feature)
+            self._cache.set(feature_key, feature)
 
             return feature
 
