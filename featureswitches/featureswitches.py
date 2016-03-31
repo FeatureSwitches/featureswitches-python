@@ -60,6 +60,8 @@ class FeatureSwitches(object):
                     f = Feature(
                             key=feature_key,
                             enabled=feature.get('enabled'),
+                            rollout_progress=feature.get('rollout_progress', None),
+                            rollout_target=feature.get('rollout_target', None),
                             include_users=feature.get('include_users', []),
                             exclude_users=feature.get('exclude_users', []),
                             last_sync=self._last_sync
@@ -90,13 +92,22 @@ class FeatureSwitches(object):
         except ValueError:
             feature = None
 
-        if feature and not self._cache_is_stale(feature):
-            return self._enabled_for_user(feature, user_identifier)
-        else:
+        if not feature or self._cache_is_stale(feature):
             feature = self._get_feature(feature_key, user_identifier)
 
-            if feature:
-                return self._enabled_for_user(feature, user_identifier)
+        if feature:
+            result = self._enabled_for_user(feature, user_identifier)
+
+            if not result and feature.enabled == True and feature.rollout_progress < feature.rollout_target:
+                enabled = self._get_feature_enabled(feature_key, user_identifier)
+
+                if enabled == true and self._cache_timeout > 0:
+                    feature.include_users.append(user_identifier)
+                    self._cache.set(feature_key, feature)
+
+                return enabled
+            
+            return result
 
         return default
 
@@ -112,10 +123,12 @@ class FeatureSwitches(object):
                 if user_identifier in feature.exclude_users:
                     return False
 
-            if not user_identifier and (feature.include_users or feature.exclude_users):
+            if feature.rollout_target > 0:
                 return False
 
-            return feature.enabled
+            if not user_identifier and (feature.rollout_target > 0 or feature.include_users or feature.exclude_users):
+                return False
+
         return feature.enabled
 
     def _cache_is_stale(self, feature):
@@ -135,7 +148,7 @@ class FeatureSwitches(object):
         return False
 
     def _get_feature(self, feature_key, user_identifier=None):
-        endpoint = 'feature/enabled'
+        endpoint = 'feature'
         payload = {'feature_key': feature_key}
 
         if user_identifier:
@@ -143,11 +156,14 @@ class FeatureSwitches(object):
 
         r = self._http.get(endpoint, params=payload)
         if r:
+            result = r.get('feature')
             feature = Feature(
                     key=feature_key,
-                    enabled=r.get('enabled'),
-                    include_users=r.get('include_users', []),
-                    exclude_users=r.get('exclude_users', []),
+                    enabled=result.get('enabled'),
+                    rollout_progress=result.get('rollout_progress', None),
+                    rollout_target=result.get('rollout_target', None),
+                    include_users=result.get('include_users', []),
+                    exclude_users=result.get('exclude_users', []),
                     last_sync=self._current_timestamp()
             )
 
@@ -155,6 +171,19 @@ class FeatureSwitches(object):
                 self._cache.set(feature_key, feature)
 
             return feature
+
+        return False
+
+    def _get_feature_enabled(self, feature_key, user_identifier=None):
+        endpoint = 'feature/enabled'
+        payload = {
+            'feature_key': feature_key,
+            'user_identifier': user_identifier
+        }
+
+        r = self._http.get(endpoint, params=payload)
+        if r:
+            return r.get('enabled', False)
 
         return False
 

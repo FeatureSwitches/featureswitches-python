@@ -2,10 +2,12 @@
 
 class Feature(object):
 
-    def __init__(self, key, enabled, include_users=[], exclude_users=[], last_sync=None):
+    def __init__(self, key, enabled, rollout_progress=0, rollout_target=0, include_users=[], exclude_users=[], last_sync=None):
         self._feature = {
             'key': key,
             'enabled': enabled,
+            'rollout_progress': rollout_progress,
+            'rollout_target': rollout_target,
             'include_users': include_users,
             'exclude_users': exclude_users,
             'last_sync': last_sync
@@ -18,6 +20,14 @@ class Feature(object):
     @property
     def enabled(self):
         return self._feature['enabled']
+
+    @property
+    def rollout_progress(self):
+        return self._feature['rollout_progress']
+
+    @property
+    def rollout_target(self):
+        return self._feature['rollout_target']
 
     @property
     def include_users(self):
